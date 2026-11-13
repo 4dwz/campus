@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Campus">
+<meta name="theme-color" content="#06166b">
+<title>Campus</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root{
+    --navy:#06166b; --sky:#62bfec; --icon:#4fb3e6; --line:#d9d9de;
+    --text:#111; --muted:#6b7280; --bg:#ecebee; --link:#1e4fd6; --red:#e8402a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+  .app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto;position:relative;background:var(--bg)}
+
+  /* Splash */
+  .splash{position:absolute;inset:0;background:var(--navy);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;transition:opacity .4s}
+  .splash.hide{opacity:0;pointer-events:none}
+  .splash svg{width:96px;height:96px;border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .splash b{font-size:24px;letter-spacing:.5px}
+
+  /* Header */
+  header{background:var(--navy);color:#fff;padding:calc(env(safe-area-inset-top) + 14px) 70px 14px;display:flex;align-items:center;justify-content:center;position:relative;min-height:66px;flex-shrink:0}
+  header h1{font-size:20px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .back{position:absolute;left:8px;bottom:10px;background:none;border:0;color:#fff;font-size:32px;line-height:1;padding:2px 12px;cursor:pointer;display:none}
+  .bell{position:absolute;right:14px;bottom:8px;width:46px;height:46px;border-radius:50%;border:2px solid #1d3bd1;background:#0a1d80;display:grid;place-items:center;cursor:pointer}
+  .bell svg{width:24px;height:24px}
+  .badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 5px}
+
+  main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(env(safe-area-inset-bottom) + 110px)}
+  .screen{display:none;animation:fade .18s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  /* Blocks used on Home / Semesters */
+  .wrap{padding:24px 16px}
+  .bar-btn{background:var(--sky);color:#fff;border-radius:8px;padding:14px 16px;font-size:24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 8px rgba(0,0,0,.15);cursor:pointer;user-select:none}
+  .bar-btn svg{width:24px;height:24px}
+  .panel{background:#fff;border-radius:8px;overflow:hidden;margin-top:24px;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .panel-head{background:var(--sky);color:#fff;display:flex;align-items:center;gap:18px;padding:18px 20px;font-size:23px;font-weight:600}
+  .panel-head svg{width:26px;height:26px;flex-shrink:0}
+  .panel-head .all{margin-left:auto;font-weight:400;font-size:20px;cursor:pointer}
+  .slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .slides::-webkit-scrollbar{display:none}
+  .slide{flex:0 0 100%;scroll-snap-align:start;padding:16px 22px 18px}
+  .slide h4{color:var(--link);font-size:19px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .slide p{font-size:16px;line-height:1.5;margin:12px 6px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .slide .more{color:var(--red);font-size:18px;margin-top:6px;display:inline-block;cursor:pointer}
+  .slide .date{color:#999;font-size:20px;margin:18px 0 0 60px}
+  .dots{background:var(--sky);display:flex;justify-content:center;gap:12px;padding:16px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer}
+  .dots i.on{background:#fff}
+  .empty{text-align:center;color:#111;font-size:19px;padding:70px 20px}
+
+  .collapse{max-height:0;overflow:hidden;transition:max-height .25s ease}
+  .collapse.open{max-height:400px}
+  .form{padding:16px 12px 16px}
+  select{width:100%;appearance:none;-webkit-appearance:none;background:#f1f1f6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231e6fe0' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center/22px;border:1.5px solid #555;border-radius:8px;padding:13px 10px;font-size:17px;font-family:inherit;color:#111}
+  .sbtn{display:block;margin:16px auto 6px;width:58%;background:var(--sky);color:#fff;border:0;border-radius:12px;padding:15px;font-size:19px;font-weight:600;font-family:inherit;cursor:pointer}
+  .card{background:#fff;border-radius:8px;padding:14px 16px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .card h3{font-size:16px;margin-bottom:4px}
+  .card .meta{font-size:13px;color:var(--muted);line-height:1.5}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  td,th{padding:8px 4px;border-bottom:1px solid #eee;text-align:left}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+
+  /* Exams list */
+  .exam{background:#fff;border-bottom:1px solid var(--line);padding:18px 14px 18px 12px;display:grid;grid-template-columns:30px 104px 1fr;column-gap:12px;cursor:pointer}
+  .exam:first-child{margin-top:10px}
+  .exam svg{width:26px;height:26px;color:var(--icon);margin-top:2px}
+  .exam .d{font-size:18px;color:#333;padding-top:2px}
+  .exam .n{font-size:17px;color:#444;line-height:1.3}
+  .exam .s{grid-column:2/4;font-size:17px;color:#444;margin-top:12px}
+  .exam.past{opacity:.5}
+
+  /* Schedule rows */
+  .sched{padding:12px 10px}
+  .srow{background:var(--sky);color:#fff;display:grid;grid-template-columns:62px 30px 1fr 100px;align-items:center;gap:6px;padding:12px 14px;margin-bottom:8px;min-height:72px;cursor:pointer}
+  .srow .c{font-size:17px}
+  .srow .w{width:26px;height:26px}
+  .srow .t{text-align:center;font-size:16px;line-height:1.3}
+  .srow .dy{text-align:right;font-size:16px}
+
+  /* More */
+  .profile{background:var(--sky);display:flex;align-items:center;gap:20px;padding:24px 14px}
+  .avatar{width:120px;height:120px;border-radius:50%;background:#fff;flex-shrink:0;display:grid;place-items:center;overflow:hidden;cursor:pointer}
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .avatar span{font-size:40px;font-weight:600;color:var(--navy)}
+  .avatar input{display:none}
+  .pinfo{color:#fff;cursor:pointer}
+  .pinfo .id{font-size:21px;letter-spacing:.5px;margin-bottom:10px}
+  .pinfo .name{font-size:21px}
+  .menu{list-style:none;background:#fff}
+  .menu > li{border-bottom:1px solid var(--line)}
+  .row{display:flex;align-items:center;gap:18px;padding:20px 18px;cursor:pointer;font-size:20px;user-select:none}
+  .row:active{background:#f4f6fb}
+  .row svg.ic{width:30px;height:30px;flex-shrink:0;color:var(--icon)}
+  .row .chev{margin-left:auto;width:20px;height:20px;color:#666;transition:transform .2s}
+  .row.open .chev{transform:rotate(180deg)}
+  .sub{list-style:none;max-height:0;overflow:hidden;transition:max-height .25s ease;background:#f4f6fb}
+  .sub li{padding:15px 18px 15px 66px;font-size:17px;border-top:1px solid var(--line);cursor:pointer}
+
+  /* Floating tab bar */
+  nav{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:40px;box-shadow:0 6px 24px rgba(0,0,0,.12);display:flex;padding:6px;z-index:10}
+  nav button{flex:1;background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;border-radius:30px;cursor:pointer;color:#222;font-size:10px;font-family:inherit;white-space:nowrap}
+  nav button svg{width:28px;height:28px}
+  nav button.on{background:#e6e6ea;color:var(--icon)}
+
+  /* Sheet */
+  .sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);display:none;z-index:20}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom) + 24px);max-height:78%;overflow:auto}
+  .sheet h2{font-size:19px;margin-bottom:12px;line-height:1.3}
+  .sheet p{font-size:16px;line-height:1.55;color:#222}
+  .btn{display:block;width:100%;background:var(--navy);color:#fff;border:0;border-radius:12px;padding:14px;font-size:16px;margin-top:16px;cursor:pointer;font-family:inherit}
+  input.txt{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:16px;margin-top:6px;font-family:inherit}
+  .kv{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;font-size:15px}
+  .kv span:first-child{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="splash" id="splash"><span id="splashLogo"></span><b class="js-app">Campus</b></div>
+
+  <header>
+    <button class="back" id="back" aria-label="Back">‹</button>
+    <h1 id="title">Home</h1>
+    <div class="bell" id="bell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <span class="badge" id="badge">5</span>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- HOME -->
+    <section class="screen" id="home">
+      <div class="wrap">
+        <div class="bar-btn" id="summaryBtn">Summary <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="m9 6 6 6-6 6"/></svg></div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <svg viewBox="0 0 24 24" fill="#fff"><path d="M22 2 2 10.5l7 3 2 7.5 3.5-5 5 4z"/></svg>
+            Notifications <span class="all" id="allNotif">All</span>
+          </div>
+          <div class="slides" id="slides"></div>
+          <div class="dots" id="dots"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h4v5H7zM14 9h4M14 13h4M7 17h11"/></svg>
+            Advertisements
+          </div>
+          <div class="empty">There are no advertisements</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEMESTERS -->
+    <section class="screen" id="semesters">
+      <div class="wrap">
+        <div class="panel" style="margin-top:0">
+          <div class="bar-btn" id="searchToggle" style="border-radius:0;box-shadow:none">Search
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1e6fe0" stroke-width="2.5" id="searchChev" style="transition:transform .2s;transform:rotate(180deg)"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          <div class="collapse open" id="searchBody">
+            <div class="form">
+              <select id="yearSel">
+                <option value="">Study Year</option>
+                <option>2026/2027</option>
+                <option>2025/2026</option>
+                <option>2024/2025</option>
+                <option>2023/2024</option>
+              </select>
+              <button class="sbtn" id="searchBtn">Search</button>
+            </div>
+          </div>
+        </div>
+        <div id="semResults"></div>
+      </div>
+    </section>
+
+    <!-- EXAMS -->
+    <section class="screen" id="exams"><div id="examList"></div></section>
+
+    <!-- SCHEDULE -->
+    <section class="screen" id="schedule"><div class="sched" id="schedList"></div></section>
+
+    <!-- MORE -->
+    <section class="screen" id="more" style="background:#fff;min-height:100%">
+      <div class="profile">
+        <label class="avatar" id="avatar">
+          <span class="js-initials">AA</span>
+          <input type="file" accept="image/*" id="photoIn">
+        </label>
+        <div class="pinfo" id="pinfo">
+          <div class="id js-id"></div>
+          <div class="name js-name"></div>
+        </div>
+      </div>
+      <ul class="menu" id="menu"></ul>
+    </section>
+
+    <section class="screen" id="generic"><div class="wrap" id="genericBody"></div></section>
+  </main>
+
+  <nav id="tabs">
+    <button data-tab="home"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 13 14 3l11 10"/><path d="M6 11v13h16V11"/><path d="M12 24v-7h4v7"/><path d="M20 6v3"/></svg>Home</button>
+    <button data-tab="semesters"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 5h18v5H5zM7 10h16v5H7zM5 15h18v5H5zM7 20h16v4H7z"/><path d="M9 5v4l1.5-1 1.5 1V5"/></svg>Academic Semesters</button>
+    <button data-tab="exams"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14 7C11 5 7 4.5 4 5v17c3-.5 7 0 10 2 3-2 7-2.5 10-2V5c-3-.5-7 0-10 2Z"/><path d="M14 7v17"/></svg>Exams</button>
+    <button data-tab="schedule"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M14 6c-3-2-6-2.5-9-2v18c3-.5 6 0 9 2 3-2 6-2.5 9-2V4c-3-.5-6 0-9 2Z"/><path d="M14 6v18M3 6v18h8M25 6v18h-8"/></svg>Current Schedule</button>
+    <button data-tab="more"><svg viewBox="0 0 28 28" fill="currentColor"><circle cx="6" cy="14" r="2"/><circle cx="14" cy="14" r="2"/><circle cx="22" cy="14" r="2"/></svg>More</button>
+  </nav>
+
+  <div class="sheet-bg" id="sheetBg"><div class="sheet" id="sheet"></div></div>
+</div>
+
+<script>
+(function(){
+  // ====== EDIT THESE ======
+  const APP_NAME = 'Campus';
+  // ========================
+
+  const store = {
+    get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+    set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  };
+  let profile = store.get('sp_profile2',{name:'Abdelrahman Adwan',id:'Student ID',photo:null});
+
+  // Original logo (open book + spark) — swap freely
+  const LOGO = `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="120" rx="26" fill="#fff"/><rect x="10" y="10" width="100" height="100" rx="20" fill="#06166b"/><path d="M60 42c-9-6-20-7-30-5v40c10-2 21-1 30 5 9-6 20-7 30-5V37c-10-2-21-1-30 5Z" fill="none" stroke="#62bfec" stroke-width="6" stroke-linejoin="round"/><path d="M60 42v40" stroke="#62bfec" stroke-width="6"/><circle cx="60" cy="27" r="5" fill="#fff"/></svg>`;
+
+  // ---------- data (from your screenshots) ----------
+  const schedule = [
+    {code:'12243',name:'Webpage Design and Internet Programming Blended',days:'Monday',warn:false},
+    {code:'31254',name:'Entrepreneurship and Innovation Online',days:'Mon Wed',warn:false},
+    {code:'12242',name:'Webpage Design and Internet Programming Lab Online',days:'Monday',warn:true},
+    {code:'11313',name:'Algorithms Design and Analysis',days:'Mon Wed',warn:false},
+    {code:'12348',name:'Multimedia Systems Online',days:'Mon Wed',warn:true}
+  ];
+  const exams = [
+    ['2026-11-23','Webpage Design and Internet Programming Lab','12242'],
+    ['2026-11-28','Multimedia Systems','12348'],
+    ['2026-11-29','Webpage Design and Internet Programming','12243'],
+    ['2026-12-02','Algorithms Design and Analysis','11313'],
+    ['2026-12-10','Entrepreneurship and Innovation','31254'],
+    ['2027-01-16','Entrepreneurship and Innovation','31254'],
+    ['2027-01-17','Webpage Design and Internet Programming','12243'],
+    ['2027-01-20','Algorithms Design and Analysis','11313']
+  ];
+  const notifs = [
+    {t:'Web Week 6 (rec. Lecture): JS Validation and Regular Expressions',b:'The recorded web lecture for week 6 is now on the e-learning platform. It includes an interactive video — watch it and answer the embedded questions before the deadline.',d:'11/11/2026'},
+    {t:'Multimedia Systems: project groups',b:'Please submit your group members list through the course page by the end of the week.',d:'10/11/2026'},
+    {t:'Algorithms: quiz 2 reminder',b:'Quiz 2 covers divide and conquer and recurrence relations. Bring your student ID.',d:'09/11/2026'},
+    {t:'Entrepreneurship: guest session',b:'An online guest session with a local startup founder will be held during Wednesday\'s lecture.',d:'08/11/2026'},
+    {t:'Spring registration dates',b:'Registration for the spring semester opens soon. Review your study plan before your slot.',d:'05/11/2026'}
+  ];
+  const semData = {
+    '2026/2027':[{s:'First Semester',st:'In progress',c:schedule.map(x=>[x.code,x.name.replace(/ (Online|Blended)$/,'')])}],
+    '2025/2026':[{s:'Summer',st:'Completed',c:[]},{s:'Second Semester',st:'Completed',c:[]},{s:'First Semester',st:'Completed',c:[]}],
+    '2024/2025':[{s:'Second Semester',st:'Completed',c:[]},{s:'First Semester',st:'Completed',c:[]}],
+    '2023/2024':[{s:'Second Semester',st:'Completed',c:[]},{s:'First Semester',st:'Completed',c:[]}]
+  };
+
+  // ---------- icons ----------
+  const ic = {
+    schedule:'<svg class="ic" viewBox="0 0 32 32" fill="currentColor"><circle cx="8" cy="7" r="3"/><path d="M5 12h6l2 4 4-2v2l-5 3-2-2v10H6V12z"/><rect x="13" y="5" width="15" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><path d="M18 22l2-5 2 5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+    book:'<svg class="ic" viewBox="0 0 32 32" fill="currentColor"><rect x="4" y="6" width="24" height="20" rx="2"/><path d="M8 6h5v8l-2.5-2L8 14z" fill="#fff"/></svg>',
+    exam:'<svg class="ic" viewBox="0 0 32 32" fill="currentColor"><circle cx="13" cy="7" r="4"/><path d="M6 28c0-8 2-13 7-13s5 4 6 8h7v2H17l-2-5-2 8z"/></svg>',
+    plan:'<svg class="ic" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="20" height="23" rx="2"/><path d="M9 12h10M9 17h7M9 22h5"/><path d="M27 9l-9 9-1 4 4-1 9-9z" fill="#fff"/></svg>',
+    reg:'<svg class="ic" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="20" height="23" rx="1"/><rect x="9" y="10" width="5" height="5"/><path d="M9 20h5v4H9z"/><path d="M29 9l-9 9-2 4 4-2 9-9z"/></svg>',
+    fin:'<svg class="ic" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="currentColor"/><text x="16" y="22" text-anchor="middle" font-size="17" font-weight="700" fill="#fff" font-family="Arial">$</text></svg>',
+    eserv:'<svg class="ic" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5h17v22H9"/><path d="M9 5 4 10v12l5 5"/><circle cx="17" cy="11" r="1.2" fill="currentColor"/><path d="M17 15v7"/></svg>',
+    portal:'<svg class="ic" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="26" height="18" rx="1"/><path d="M3 9h26M12 27h8M16 22v5"/><path d="M7 13h6v5H7zM16 13h9M16 16h9M16 19h6"/></svg>',
+    web:'<svg class="ic" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="16" r="12"/><path d="M4 16h24M16 4c4 4 4 20 0 24M16 4c-4 4-4 20 0 24"/></svg>',
+    out:'<svg class="ic" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 5H6v22h7"/><path d="M20 10l6 6-6 6M12 16h14"/></svg>'
+  };
+  const examIc = '<svg viewBox="0 0 26 26" fill="currentColor"><rect x="7" y="2" width="16" height="20" rx="3"/><rect x="2" y="12" width="7" height="12" rx="2.5"/><path d="M11 8h8M11 12h8M11 16h5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
+  const warnIc = '<svg class="w" viewBox="0 0 26 26"><defs><radialGradient id="g" cx=".35" cy=".3"><stop offset="0" stop-color="#fff59a"/><stop offset="1" stop-color="#e3b800"/></radialGradient></defs><circle cx="13" cy="13" r="12" fill="url(#g)"/><rect x="11.6" y="6" width="2.8" height="9" rx="1.4" fill="#fff"/><circle cx="13" cy="19" r="1.7" fill="#fff"/></svg>';
+  const chev = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>';
+
+  const menuItems = [
+    {label:'Current Schedule',icon:'schedule',go:'schedule'},
+    {label:'Academic Semesters',icon:'book',go:'semesters'},
+    {label:'Semesters Courses',icon:'book',go:'Semesters Courses'},
+    {label:'Exams Schedule',icon:'exam',go:'exams'},
+    {label:'Study Plan',icon:'plan',go:'Study Plan'},
+    {label:'Registration',icon:'reg',sub:['Add / Drop Courses','Registered Courses','Registration Dates']},
+    {label:'Financial',icon:'fin',sub:['Account Statement','Fees Breakdown','Payments History']},
+    {label:'E-Services',icon:'eserv',go:'E-Services'},
+    {label:'Portal',icon:'portal',go:'Portal'},
+    {label:'Website',icon:'web',go:'Website'},
+    {label:'Log Out',icon:'out',go:'logout'}
+  ];
+
+  const $ = s=>document.querySelector(s);
+  const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const titles = {home:'Home',semesters:'Academic Semesters',exams:'Exams',schedule:'Current Schedule',more:'More'};
+  const tabScreens = ['home','semesters','exams','schedule','more'];
+  let stack = [];
+
+  // ---------- app name + logo ----------
+  document.title = APP_NAME;
+  document.querySelectorAll('.js-app').forEach(e=>e.textContent=APP_NAME);
+  $('#splashLogo').innerHTML = LOGO;
+
+
+  // ---------- profile ----------
+  function renderProfile(){
+    document.querySelectorAll('.js-name').forEach(e=>e.textContent=profile.name);
+    document.querySelectorAll('.js-id').forEach(e=>e.textContent=profile.id);
+    const av=$('#avatar');
+    av.querySelectorAll('img').forEach(i=>i.remove());
+    const sp=av.querySelector('span');
+    sp.textContent=profile.name.split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    sp.style.display=profile.photo?'none':'';
+    if(profile.photo){const img=new Image();img.src=profile.photo;av.prepend(img)}
+  }
+
+  // ---------- home ----------
+  function renderHome(){
+    $('#slides').innerHTML = notifs.map((n,i)=>`
+      <div class="slide"><h4>${esc(n.t)}</h4><p>${esc(n.b)}</p>
+      <span class="more" data-n="${i}">More</span><div class="date">${n.d}</div></div>`).join('');
+    $('#dots').innerHTML = notifs.map((_,i)=>`<i data-i="${i}" class="${i?'':'on'}"></i>`).join('');
+    const sl=$('#slides');
+    sl.addEventListener('scroll',()=>{
+      const i=Math.round(sl.scrollLeft/sl.clientWidth);
+      $('#dots').querySelectorAll('i').forEach((d,j)=>d.classList.toggle('on',i===j));
+    },{passive:true});
+    $('#dots').querySelectorAll('i').forEach(d=>d.onclick=()=>sl.scrollTo({left:sl.clientWidth*d.dataset.i,behavior:'smooth'}));
+    sl.querySelectorAll('.more').forEach(m=>m.onclick=()=>openNotif(+m.dataset.n));
+    $('#allNotif').onclick=allNotifs;
+    $('#summaryBtn').onclick=()=>{
+      const up=exams.filter(e=>new Date(e[0])>=today()).length;
+      sheet(`<h2>Summary</h2>
+        <div class="kv"><span>Student</span><span>${esc(profile.name)}</span></div>
+        <div class="kv"><span>Registered courses</span><span>${schedule.length}</span></div>
+        <div class="kv"><span>Upcoming exams</span><span>${up}</span></div>
+        <div class="kv"><span>Next exam</span><span>${nextExam()}</span></div>
+        <div class="kv"><span>Class days</span><span>Mon · Wed</span></div>
+        <button class="btn" data-close>Close</button>`);
+    };
+  }
+  function openNotif(i){const n=notifs[i];sheet(`<h2 style="color:var(--link)">${esc(n.t)}</h2><p>${esc(n.b)}</p><div class="meta" style="margin-top:14px;color:#999">${n.d}</div><button class="btn" data-close>Close</button>`)}
+  function allNotifs(){
+    sheet('<h2>Notifications</h2>'+notifs.map((n,i)=>`<div class="card" data-n="${i}" style="cursor:pointer;border:1px solid #eee"><h3 style="color:var(--link)">${esc(n.t)}</h3><div class="meta">${n.d}</div></div>`).join('')+'<button class="btn" data-close>Close</button>');
+    $('#sheet').querySelectorAll('[data-n]').forEach(c=>c.onclick=()=>openNotif(+c.dataset.n));
+    $('#badge').style.display='none';
+  }
+
+  // ---------- semesters ----------
+  function renderSemesters(){
+    $('#searchToggle').onclick=()=>{const o=$('#searchBody').classList.toggle('open');$('#searchChev').style.transform=o?'rotate(180deg)':''};
+    $('#searchBtn').onclick=()=>{
+      const y=$('#yearSel').value;
+      if(!y){$('#semResults').innerHTML='<div class="card"><div class="meta">Please choose a study year.</div></div>';return}
+      $('#semResults').innerHTML=(semData[y]||[]).map(s=>`<div class="card"><h3>${y} — ${s.s}</h3><div class="meta">${s.st}</div>${
+        s.c.length?'<table><tr><th>Code</th><th>Course</th></tr>'+s.c.map(c=>`<tr><td>${c[0]}</td><td>${esc(c[1])}</td></tr>`).join('')+'</table>':'<div class="meta" style="margin-top:6px">Add this semester\'s courses in the app data.</div>'
+      }</div>`).join('');
+    };
+  }
+
+  // ---------- exams ----------
+  const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+  const fmt=iso=>{const [y,m,d]=iso.split('-');return `${d}/${m}/${y}`};
+  function nextExam(){const e=exams.find(e=>new Date(e[0])>=today());return e?`${fmt(e[0])} · ${e[2]}`:'—'}
+  function renderExams(){
+    const t=today();
+    $('#examList').innerHTML=exams.map((e,i)=>{
+      const past=new Date(e[0])<t;
+      return `<div class="exam ${past?'past':''}" data-i="${i}">${examIc}<div class="d">${fmt(e[0])}</div><div class="n">${esc(e[1])} ${e[2]}</div><div class="s">(${past?'Finished Exam':'Upcoming Exam'})</div></div>`;
+    }).join('');
+    $('#examList').querySelectorAll('.exam').forEach(r=>r.onclick=()=>{
+      const e=exams[r.dataset.i];const days=Math.round((new Date(e[0])-t)/864e5);
+      sheet(`<h2>${esc(e[1])}</h2><div class="kv"><span>Course code</span><span>${e[2]}</span></div><div class="kv"><span>Date</span><span>${fmt(e[0])}</span></div><div class="kv"><span>Countdown</span><span>${days>0?days+' days':days===0?'Today':'Done'}</span></div><button class="btn" data-close>Close</button>`);
+    });
+  }
+
+  // ---------- schedule ----------
+  function renderSchedule(){
+    $('#schedList').innerHTML=schedule.map((s,i)=>`<div class="srow" data-i="${i}"><span class="c">${s.code}</span><span>${s.warn?warnIc:''}</span><span class="t">${esc(s.name)}</span><span class="dy">Day: ${s.days}</span></div>`).join('');
+    $('#schedList').querySelectorAll('.srow').forEach(r=>r.onclick=()=>{
+      const s=schedule[r.dataset.i];
+      const ex=exams.filter(e=>e[2]===s.code).map(e=>fmt(e[0])).join(', ')||'—';
+      sheet(`<h2>${esc(s.name)}</h2><div class="kv"><span>Code</span><span>${s.code}</span></div><div class="kv"><span>Days</span><span>${s.days}</span></div><div class="kv"><span>Exams</span><span>${ex}</span></div>${s.warn?'<div class="kv"><span>Note</span><span style="color:#b38600">Attendance warning</span></div>':''}<button class="btn" data-close>Close</button>`);
+    });
+  }
+
+  // ---------- more ----------
+  function renderMenu(){
+    $('#menu').innerHTML=menuItems.map((m,i)=>`
+      <li><div class="row" data-i="${i}">${ic[m.icon]}<span>${m.label}</span>${m.sub?chev:''}</div>
+      ${m.sub?`<ul class="sub">${m.sub.map(s=>`<li data-sub="${s}">${s}</li>`).join('')}</ul>`:''}</li>`).join('');
+    $('#menu').querySelectorAll('.row').forEach(r=>r.onclick=()=>{
+      const m=menuItems[r.dataset.i];
+      if(m.sub){const sub=r.nextElementSibling,o=r.classList.toggle('open');sub.style.maxHeight=o?sub.scrollHeight+'px':0;return}
+      if(m.go==='logout')return sheet('<h2>Log out?</h2><p>This is a demo app — there\'s nothing to sign out of.</p><button class="btn" data-close>OK</button>');
+      if(tabScreens.includes(m.go))return switchTab(m.go);
+      genericPage(m.go);
+    });
+    $('#menu').querySelectorAll('.sub li').forEach(li=>li.onclick=()=>genericPage(li.dataset.sub));
+  }
+  function genericPage(name){
+    titles.generic=name;
+    $('#genericBody').innerHTML=`<div class="panel" style="margin-top:0"><div class="panel-head">${esc(name)}</div><div class="empty" style="font-size:16px;color:#666">Nothing here yet — tell Claude what this screen should show.</div></div>`;
+    push('generic');
+  }
+
+  // ---------- navigation ----------
+  function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
+    $('#title').textContent=titles[id]||id;
+    $('#back').style.display=stack.length?'block':'none';
+    $('#main').scrollTop=0;
+  }
+  function setTabUI(id){document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===id))}
+  function switchTab(id){stack=[];setTabUI(id);try{if(location.hash!=='#'+id)location.hash=id}catch(e){}show(id)}
+  function push(id){stack.push(document.querySelector('.screen.active').id);show(id)}
+  $('#back').onclick=()=>show(stack.pop());
+  document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+  window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(tabScreens.includes(h)){stack=[];setTabUI(h);show(h)}});
+
+  // ---------- sheet ----------
+  function sheet(html){$('#sheet').innerHTML=html;$('#sheetBg').style.display='block';$('#sheet').querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet)}
+  function closeSheet(){$('#sheetBg').style.display='none'}
+  $('#sheetBg').onclick=e=>{if(e.target.id==='sheetBg')closeSheet()};
+  $('#bell').onclick=allNotifs;
+
+  $('#pinfo').onclick=()=>{
+    sheet(`<h2>Edit profile</h2>
+      <label class="meta">Name</label><input class="txt" id="eName" value="${esc(profile.name)}">
+      <label class="meta" style="display:block;margin-top:12px">Student ID</label><input class="txt" id="eId" value="${esc(profile.id)}" inputmode="numeric">
+      <button class="btn" id="saveP">Save</button>`);
+    $('#saveP').onclick=()=>{profile.name=$('#eName').value.trim()||profile.name;profile.id=$('#eId').value.trim()||profile.id;store.set('sp_profile2',profile);renderProfile();closeSheet()};
+  };
+  $('#photoIn').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{const img=new Image();img.onload=()=>{
+      const c=document.createElement('canvas'),s=260;c.width=c.height=s;
+      const k=Math.max(s/img.width,s/img.height),w=img.width*k,h=img.height*k;
+      c.getContext('2d').drawImage(img,(s-w)/2,(s-h)/2,w,h);
+      profile.photo=c.toDataURL('image/jpeg',.82);store.set('sp_profile2',profile);renderProfile();
+    };img.src=r.result};
+    r.readAsDataURL(f);
+  };
+
+  // ---------- boot ----------
+  renderProfile();renderHome();renderSemesters();renderExams();renderSchedule();renderMenu();
+  const start=tabScreens.includes(location.hash.slice(1))?location.hash.slice(1):'home';
+  switchTab(start);
+  setTimeout(()=>$('#splash').classList.add('hide'),900);
+  if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+})();
+</script>
+</body>
+</html>
