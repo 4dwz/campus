@@ -17,15 +17,17 @@
     --text:#111; --muted:#6b7280; --bg:#ecebee; --link:#1e4fd6; --red:#e8402a;
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;height:100dvh;background:var(--bg)}
+  html,body{height:100%;height:100dvh}
+  html{background:#06166b}
+  body{background:var(--bg)}
   :root{--gap:0px}
   body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
   .app{display:flex;flex-direction:column;height:100%;height:calc(100dvh + var(--gap));max-width:520px;margin:0 auto;position:relative;background:var(--bg)}
 
   /* Splash */
-  .splash{position:fixed;inset:0;background:var(--navy);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;transition:opacity .4s}
+  .splash{position:fixed;inset:0;background:#06166b url('splash.png') center/cover no-repeat;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;transition:opacity .4s}
   .splash.hide{opacity:0;pointer-events:none}
-  .splash svg{width:96px;height:96px;border-radius:22px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .splash-logo{width:110px;height:110px;border-radius:24px;box-shadow:0 8px 30px rgba(0,0,0,.35);background:#fff}
   .splash b{font-size:24px;letter-spacing:.5px}
 
   /* Header */
@@ -128,7 +130,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="splash" id="splash"><span id="splashLogo"></span><b class="js-app">Campus</b></div>
+  <div class="splash" id="splash"></div>
 
   <header>
     <button class="back" id="back" aria-label="Back">‹</button>
@@ -311,7 +313,6 @@
   // ---------- app name + logo ----------
   document.title = APP_NAME;
   document.querySelectorAll('.js-app').forEach(e=>e.textContent=APP_NAME);
-  $('#splashLogo').innerHTML = LOGO;
 
 
   // ---------- profile ----------
