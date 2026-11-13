@@ -475,7 +475,11 @@
   const start=tabScreens.includes(location.hash.slice(1))?location.hash.slice(1):'home';
   switchTab(start);
   setTimeout(()=>$('#splash').classList.add('hide'),900);
-  if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+    let reloaded=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!reloaded&&navigator.serviceWorker.controller){reloaded=true;location.reload()}});
+  }
 })();
 </script>
 </body>
