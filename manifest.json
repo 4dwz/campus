@@ -1,6 +1,6 @@
 {
-  "name": "Campus",
-  "short_name": "Campus",
+  "name": "PSUT",
+  "short_name": "PSUT",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
