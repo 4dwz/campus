@@ -232,7 +232,7 @@
     get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},
     set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
   };
-  let profile = store.get('sp_profile2',{name:'Abdelrahman Adwan',id:'Student ID',photo:'photo.jpg'});
+  let profile = store.get('sp_profile3',{name:'press to edit',id:'Student ID',photo:'photo.jpg'});
   if(!profile.photo) profile.photo='photo.jpg';
 
   // Original logo (open book + spark) — swap freely
@@ -440,7 +440,7 @@
       <label class="meta">Name</label><input class="txt" id="eName" value="${esc(profile.name)}">
       <label class="meta" style="display:block;margin-top:12px">Student ID</label><input class="txt" id="eId" value="${esc(profile.id)}" inputmode="numeric">
       <button class="btn" id="saveP">Save</button>`);
-    $('#saveP').onclick=()=>{profile.name=$('#eName').value.trim()||profile.name;profile.id=$('#eId').value.trim()||profile.id;store.set('sp_profile2',profile);renderProfile();closeSheet()};
+    $('#saveP').onclick=()=>{profile.name=$('#eName').value.trim()||profile.name;profile.id=$('#eId').value.trim()||profile.id;store.set('sp_profile3',profile);renderProfile();closeSheet()};
   };
   $('#photoIn').onchange=e=>{
     const f=e.target.files[0];if(!f)return;
@@ -449,7 +449,7 @@
       const c=document.createElement('canvas'),s=260;c.width=c.height=s;
       const k=Math.max(s/img.width,s/img.height),w=img.width*k,h=img.height*k;
       c.getContext('2d').drawImage(img,(s-w)/2,(s-h)/2,w,h);
-      profile.photo=c.toDataURL('image/jpeg',.82);store.set('sp_profile2',profile);renderProfile();
+      profile.photo=c.toDataURL('image/jpeg',.82);store.set('sp_profile3',profile);renderProfile();
     };img.src=r.result};
     r.readAsDataURL(f);
   };
