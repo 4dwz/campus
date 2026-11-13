@@ -458,7 +458,7 @@
 
   // iOS home-screen bug: viewport reported shorter than the real screen
   function fixGap(){
-    const standalone = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+    const standalone = window.navigator.standalone === true; // iOS only; Android reports system bars differently
     let gap = 0;
     if(standalone){
       const portrait = window.innerHeight > window.innerWidth;
